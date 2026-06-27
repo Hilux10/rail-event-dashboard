@@ -1,11 +1,15 @@
 """
 Rail Event Dashboard — Flask Web App
 """
+import base64
 import json
+import json as _json
 import logging
 import os
 import threading
+import urllib.request
 from datetime import datetime
+
 from flask import Flask, jsonify, render_template, request
 from event_scanner import (
     CONFIG,
@@ -15,7 +19,6 @@ from event_scanner import (
     html_to_pdf,
     init_db,
     run_scan,
-    send_email,
 )
 
 app = Flask(__name__)
@@ -81,16 +84,36 @@ def api_send_email():
     events = get_upcoming_events()
     if not events:
         return jsonify({"ok": False, "error": "אין אירועים — הרץ סריקה תחילה"}), 400
-    original = CONFIG["recipient_email"]
-    CONFIG["recipient_email"] = to_email
+
     def do_send():
         try:
             html_body = build_email_html(events, [])
-            send_email(html_body, False, events)
+            pdf_bytes = html_to_pdf(build_pdf_summary_html(events))
+            payload = {
+                "from": "Rail Event Bot <onboarding@resend.dev>",
+                "to": [to_email],
+                "subject": "דוח אירועים — אגף הביטחון מסילת ישראל",
+                "html": html_body,
+            }
+            if pdf_bytes:
+                payload["attachments"] = [{
+                    "filename": "דוח_אירועים.pdf",
+                    "content": base64.b64encode(pdf_bytes).decode()
+                }]
+            req = urllib.request.Request(
+                "https://api.resend.com/emails",
+                data=_json.dumps(payload).encode(),
+                headers={
+                    "Authorization": f"Bearer {os.environ.get('RESEND_API_KEY', '')}",
+                    "Content-Type": "application/json"
+                },
+                method="POST"
+            )
+            with urllib.request.urlopen(req) as resp:
+                logging.info(f"Resend sent: {resp.status} to {to_email}")
         except Exception as e:
             logging.error(f"Email error: {e}")
-        finally:
-            CONFIG["recipient_email"] = original
+
     threading.Thread(target=do_send, daemon=True).start()
     return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
 

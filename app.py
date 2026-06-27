@@ -1,14 +1,16 @@
 """
 Rail Event Dashboard — Flask Web App
 """
-import base64
 import json
-import json as _json
 import logging
 import os
+import smtplib
 import threading
-import urllib.request
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 from flask import Flask, jsonify, render_template, request
 from event_scanner import (
@@ -89,28 +91,28 @@ def api_send_email():
         try:
             html_body = build_email_html(events, [])
             pdf_bytes = html_to_pdf(build_pdf_summary_html(events))
-            payload = {
-                "from": "Rail Event Bot <onboarding@resend.dev>",
-                "to": [to_email],
-                "subject": "דוח אירועים — אגף הביטחון מסילת ישראל",
-                "html": html_body,
-            }
+
+            msg = MIMEMultipart()
+            msg["From"] = "אגף הביטחון — מסילת ישראל <b02f7b001@smtp-brevo.com>"
+            msg["To"] = to_email
+            msg["Subject"] = "דוח אירועים — אגף הביטחון מסילת ישראל"
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
+
             if pdf_bytes:
-                payload["attachments"] = [{
-                    "filename": "דוח_אירועים.pdf",
-                    "content": base64.b64encode(pdf_bytes).decode()
-                }]
-            req = urllib.request.Request(
-                "https://api.resend.com/emails",
-                data=_json.dumps(payload).encode(),
-                headers={
-                    "Authorization": f"Bearer {os.environ.get('RESEND_API_KEY', '')}",
-                    "Content-Type": "application/json"
-                },
-                method="POST"
-            )
-            with urllib.request.urlopen(req) as resp:
-                logging.info(f"Resend sent: {resp.status} to {to_email}")
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(pdf_bytes)
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", 'attachment; filename="דוח_אירועים.pdf"')
+                msg.attach(part)
+
+            smtp_user = os.environ.get("BREVO_SMTP_USER", "")
+            smtp_pass = os.environ.get("BREVO_SMTP_PASS", "")
+
+            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.sendmail(smtp_user, to_email, msg.as_string())
+                logging.info(f"Brevo email sent to {to_email}")
         except Exception as e:
             logging.error(f"Email error: {e}")
 

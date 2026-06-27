@@ -12,17 +12,6 @@ from datetime import datetime
 
 from flask import Flask, jsonify, render_template, request
 
-# ייבוא כל הפונקציות מהבוט הקיים
-from event_scanner import (
-    CONFIG,
-    build_email_html,
-    build_pdf_summary_html,
-    get_upcoming_events,
-    html_to_pdf,
-    init_db,
-    run_scan,
-    send_email,
-)
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)

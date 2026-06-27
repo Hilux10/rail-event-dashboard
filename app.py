@@ -88,12 +88,16 @@ def api_send_email():
         return jsonify({"ok": False, "error": "אין אירועים — הרץ סריקה תחילה"}), 400
     original = CONFIG["recipient_email"]
     CONFIG["recipient_email"] = to_email
-    try:
-        html_body = build_email_html(events, [])
-        send_email(html_body, False, events)
-        return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+    def do_send():
+        try:
+            html_body = build_email_html(events, [])
+            send_email(html_body, False, events)
+        except Exception as e:
+            logging.error(f"Email error: {e}")
+        finally:
+            CONFIG["recipient_email"] = original
+    threading.Thread(target=do_send, daemon=True).start()
+    return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
     finally:
         CONFIG["recipient_email"] = original
 

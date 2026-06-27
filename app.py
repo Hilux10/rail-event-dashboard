@@ -89,7 +89,7 @@ def api_send_email():
 
     try:
         html_body = build_email_html(events, [])
-        pdf_bytes = html_to_pdf(build_pdf_summary_html(events))
+        pdf_bytes = None
 
         msg = MIMEMultipart()
         msg["From"] = "Rail Security <b02f7b001@smtp-brevo.com>"

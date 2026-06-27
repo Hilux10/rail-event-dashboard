@@ -23,6 +23,7 @@ from event_scanner import (
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
+init_db()
 
 scan_status = {
     "running": False,

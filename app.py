@@ -70,11 +70,8 @@ def api_scan():
             logging.error(f"Scan error: {e}")
         finally:
             scan_status["running"] = False
-  try:
-        do_send()
-        return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+    threading.Thread(target=do_scan, daemon=True).start()
+    return jsonify({"ok": True, "message": "סריקה החלה"})
 
 @app.route("/api/scan/status")
 def api_scan_status():
@@ -90,37 +87,36 @@ def api_send_email():
     if not events:
         return jsonify({"ok": False, "error": "אין אירועים — הרץ סריקה תחילה"}), 400
 
-    def do_send():
-        try:
-            html_body = build_email_html(events, [])
-            pdf_bytes = html_to_pdf(build_pdf_summary_html(events))
+    try:
+        html_body = build_email_html(events, [])
+        pdf_bytes = html_to_pdf(build_pdf_summary_html(events))
 
-            msg = MIMEMultipart()
-            msg["From"] = "אגף הביטחון — מסילת ישראל <b02f7b001@smtp-brevo.com>"
-            msg["To"] = to_email
-            msg["Subject"] = "דוח אירועים — אגף הביטחון מסילת ישראל"
-            msg.attach(MIMEText(html_body, "html", "utf-8"))
+        msg = MIMEMultipart()
+        msg["From"] = "Rail Security <b02f7b001@smtp-brevo.com>"
+        msg["To"] = to_email
+        msg["Subject"] = "דוח אירועים — אגף הביטחון מסילת ישראל"
+        msg.attach(MIMEText(html_body, "html", "utf-8"))
 
-            if pdf_bytes:
-                part = MIMEBase("application", "octet-stream")
-                part.set_payload(pdf_bytes)
-                encoders.encode_base64(part)
-                part.add_header("Content-Disposition", 'attachment; filename="דוח_אירועים.pdf"')
-                msg.attach(part)
+        if pdf_bytes:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(pdf_bytes)
+            encoders.encode_base64(part)
+            part.add_header("Content-Disposition", 'attachment; filename="report.pdf"')
+            msg.attach(part)
 
-            smtp_user = os.environ.get("BREVO_SMTP_USER", "")
-            smtp_pass = os.environ.get("BREVO_SMTP_PASS", "")
+        smtp_user = os.environ.get("BREVO_SMTP_USER", "")
+        smtp_pass = os.environ.get("BREVO_SMTP_PASS", "")
 
-            with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-                server.starttls()
-                server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_user, to_email, msg.as_string())
-                logging.info(f"Brevo email sent to {to_email}")
-        except Exception as e:
-            logging.error(f"Email error: {e}")
+        with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, to_email, msg.as_string())
+            logging.info(f"Brevo email sent to {to_email}")
 
-    threading.Thread(target=do_send, daemon=True).start()
-    return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
+        return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
+    except Exception as e:
+        logging.error(f"Email error: {e}")
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/api/events/<event_id>", methods=["DELETE"])
 def api_delete_event(event_id):

@@ -70,8 +70,11 @@ def api_scan():
             logging.error(f"Scan error: {e}")
         finally:
             scan_status["running"] = False
-    threading.Thread(target=do_scan, daemon=True).start()
-    return jsonify({"ok": True, "message": "סריקה החלה"})
+  try:
+        do_send()
+        return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
 
 @app.route("/api/scan/status")
 def api_scan_status():

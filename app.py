@@ -1,15 +1,12 @@
 """
 Rail Event Dashboard — Flask Web App
 """
-
 import json
 import logging
 import os
 import threading
 from datetime import datetime
-
 from flask import Flask, jsonify, render_template, request
-
 from event_scanner import (
     CONFIG,
     build_email_html,
@@ -55,7 +52,6 @@ def api_events():
 def api_scan():
     if scan_status["running"]:
         return jsonify({"ok": False, "error": "סריקה כבר רצה — המתן לסיום"}), 409
-
     def do_scan():
         scan_status["running"] = True
         scan_status["error"] = None
@@ -69,7 +65,6 @@ def api_scan():
             logging.error(f"Scan error: {e}")
         finally:
             scan_status["running"] = False
-
     threading.Thread(target=do_scan, daemon=True).start()
     return jsonify({"ok": True, "message": "סריקה החלה"})
 
@@ -98,8 +93,6 @@ def api_send_email():
             CONFIG["recipient_email"] = original
     threading.Thread(target=do_send, daemon=True).start()
     return jsonify({"ok": True, "message": f"דוח PDF נשלח אל {to_email}"})
-    finally:
-        CONFIG["recipient_email"] = original
 
 @app.route("/api/events/<event_id>", methods=["DELETE"])
 def api_delete_event(event_id):

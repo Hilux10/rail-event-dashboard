@@ -19,8 +19,9 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f6f8;direction:rtl;co
 .btn-primary{background:#f5c518;border-color:#e8b800;color:#1a1200;font-weight:600}
 .btn-primary:hover{background:#e8b800}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
-.btn-blue{background:#1d4ed8;border-color:#1e40af;color:#fff;font-weight:500}
-.btn-blue:hover{background:#1e40af}
+.btn-green{background:#059669;border-color:#047857;color:#fff;font-weight:600}
+.btn-green:hover{background:#047857}
+.btn-green:disabled{opacity:.5;cursor:not-allowed}
 .content{padding:20px 24px;max-width:1200px;margin:0 auto}
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px}
@@ -68,17 +69,12 @@ tr:hover td{background:#fffbeb}
 .progress-fill{height:100%;background:#f5c518;border-radius:2px;width:0%;transition:width .4s}
 .scan-label{font-size:12px;color:#6b7280}
 .chart-wrap{padding:14px 18px 18px;height:220px;position:relative}
-.email-panel{padding:16px 18px;background:#f9fafb;border-top:1px solid #f3f4f6;display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
-.field-group{display:flex;flex-direction:column;gap:4px;flex:1;min-width:180px}
-.field-label{font-size:11px;color:#6b7280;font-weight:500}
-.field-input{padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:#fff;color:#111;font-family:inherit;outline:none;transition:border .12s}
-.field-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.1)}
+.pdf-panel{padding:16px 18px;background:#f0fdf4;border-top:1px solid #d1fae5;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pdf-info{font-size:12px;color:#065f46}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#059669;color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;display:none;z-index:999;box-shadow:0 4px 12px rgba(0,0,0,.15)}
 .toast.err{background:#dc2626}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;display:inline-block}
-.status-dot.live{background:#22c55e;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-@media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}.email-panel{flex-direction:column}}
+@media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -92,7 +88,7 @@ tr:hover td{background:#fffbeb}
     </div>
     <div>
       <div class="brand-name">מערכת סריקת אירועים</div>
-      <div class="brand-sub">אגף הביטחון — מערכת סריקת אירועים</div>
+      <div class="brand-sub">אגף הביטחון — מסילת ישראל</div>
     </div>
   </div>
   <div class="top-actions">
@@ -189,35 +185,28 @@ tr:hover td{background:#fffbeb}
     </div>
   </div>
 
-  <!-- שליחת מייל -->
-  <div class="card" style="position:relative">
-    <div class="toast" id="toast"></div>
+  <!-- הורדת PDF -->
+  <div class="card">
     <div class="card-head">
-      <div class="card-title">✉️ שליחת דוח PDF במייל</div>
+      <div class="card-title">📄 דוח PDF</div>
     </div>
-    <div class="email-panel">
-      <div class="field-group">
-        <label class="field-label">כתובת מייל</label>
-        <input class="field-input" type="email" id="emailTo" placeholder="daniel@israelrailways.co.il">
+    <div class="pdf-panel">
+      <div class="pdf-info">
+        הדוח יכלול רשימת כל האירועים, תחנות מושפעות, צפי קהל ורמות דחרוג — בפורמט PDF רשמי מעוצב.
       </div>
-      <div class="field-group" style="flex:0 0 auto">
-        <label class="field-label">נושא</label>
-        <input class="field-input" type="text" id="emailSubj" placeholder="סיכום אירועים שבועי" style="width:220px">
-      </div>
-      <button class="btn btn-blue" onclick="sendReport()" style="height:36px;margin-bottom:0">
-        ✈ שלח דוח PDF
+      <button class="btn btn-green" id="pdfBtn" onclick="downloadPDF()">
+        ⬇ הורד דוח PDF
       </button>
-    </div>
-    <div style="padding:8px 18px 14px;font-size:11px;color:#9ca3af">
-      הדוח יכלול: רשימת אירועים, תחנות מושפעות, צפי קהל, רמות דחרוג וגרף עומס שבועי — בפורמט PDF רשמי.
     </div>
   </div>
 
-</div><!-- /content -->
+</div>
 
 <div class="toast" id="globalToast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
 let allEvents = [], deletedEvent = null, chart = null, activeFilter = 'all';
 
@@ -419,29 +408,126 @@ function showToast(msg, err) {
   setTimeout(()=>t.style.display='none', 3500);
 }
 
-async function sendReport() {
-  const em = document.getElementById('emailTo').value.trim();
-  if(!em || !em.includes('@')) { showToast('נא להזין כתובת מייל תקינה', true); return; }
+function riskText(level) {
+  if(level==='very_high') return 'גבוה מאוד';
+  if(level==='high') return 'גבוה';
+  if(level==='medium') return 'בינוני';
+  return 'נמוך';
+}
+
+function downloadPDF() {
   if(!allEvents.length) { showToast('אין אירועים — הרץ סריקה תחילה', true); return; }
-  const btn = event.target;
-  btn.disabled = true; btn.textContent = 'שולח...';
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true; btn.textContent = '⏳ מייצר PDF...';
+
   try {
-    const r = await fetch('/api/send-email', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({to: em})
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    // כותרת ראשית
+    doc.setFillColor(245, 197, 24);
+    doc.rect(0, 0, 297, 22, 'F');
+    doc.setTextColor(26, 18, 0);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Israel Railways Security Division', 148, 10, { align: 'center' });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Event Scan Report - ' + new Date().toLocaleDateString('he-IL'), 148, 17, { align: 'center' });
+
+    // KPI boxes
+    const evs = [...allEvents].sort((a,b)=>a.date.localeCompare(b.date));
+    const highCount = evs.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high').length;
+    const stations = new Set(evs.flatMap(e=>[...(e.stations_primary||[]),...(e.stations_secondary||[])]));
+
+    const kpis = [
+      { label: 'Active Events', value: evs.length },
+      { label: 'High Risk', value: highCount },
+      { label: 'Stations Affected', value: stations.size },
+    ];
+    kpis.forEach((k, i) => {
+      const x = 10 + i * 55;
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(x, 26, 50, 16, 2, 2, 'F');
+      doc.setDrawColor(229, 231, 235);
+      doc.roundedRect(x, 26, 50, 16, 2, 2, 'S');
+      doc.setTextColor(107, 114, 128);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.label, x + 25, 31, { align: 'center' });
+      doc.setTextColor(17, 17, 17);
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(k.value), x + 25, 39, { align: 'center' });
     });
-    const d = await r.json();
-    if(d.ok) showToast(`✅ דוח PDF נשלח אל ${em}`);
-    else showToast(`❌ שגיאה: ${d.error}`, true);
+
+    // טבלת אירועים
+    const rows = evs.map(ev => {
+      const d = new Date(ev.date);
+      const ds = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+      const stations = [...(ev.stations_primary||[]), ...(ev.stations_secondary||[])].slice(0,2).join(', ');
+      const region = (ev.region||'').replace('תל אביב - גוש דן','Tel Aviv').replace('חיפה וצפון','Haifa').replace('שרון','Sharon');
+      return [
+        ev.title ? ev.title.substring(0, 35) : '',
+        ds + (ev.time ? ' ' + ev.time : ''),
+        ev.location ? ev.location.substring(0, 20) : '',
+        stations,
+        ev.estimated_crowd ? ev.estimated_crowd.toLocaleString() : '0',
+        riskText(ev.crowd_level),
+        ev.event_type || '',
+        region,
+      ];
+    });
+
+    doc.autoTable({
+      head: [['Event', 'Date', 'Venue', 'Stations', 'Crowd Est.', 'Risk', 'Type', 'Region']],
+      body: rows,
+      startY: 46,
+      styles: { fontSize: 8, cellPadding: 2, overflow: 'ellipsize' },
+      headStyles: { fillColor: [26, 18, 0], textColor: [245, 197, 24], fontStyle: 'bold', fontSize: 8 },
+      alternateRowStyles: { fillColor: [249, 250, 251] },
+      columnStyles: {
+        0: { cellWidth: 60 },
+        1: { cellWidth: 28 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 45 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 22 },
+        6: { cellWidth: 22 },
+        7: { cellWidth: 25 },
+      },
+      didParseCell: (data) => {
+        if(data.section === 'body' && data.column.index === 5) {
+          const v = data.cell.raw;
+          if(v === 'גבוה מאוד') data.cell.styles.textColor = [153, 27, 27];
+          else if(v === 'גבוה') data.cell.styles.textColor = [185, 28, 28];
+          else if(v === 'בינוני') data.cell.styles.textColor = [146, 64, 14];
+          else data.cell.styles.textColor = [20, 83, 45];
+        }
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    // פוטר
+    const pageCount = doc.internal.getNumberOfPages();
+    for(let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(7);
+      doc.setTextColor(156, 163, 175);
+      doc.text(`Page ${i} of ${pageCount} | Israel Railways Security Division | Confidential`, 148, 205, { align: 'center' });
+    }
+
+    const date = new Date().toISOString().split('T')[0];
+    doc.save(`rail-security-events-${date}.pdf`);
+    showToast('✅ דוח PDF הורד בהצלחה!');
   } catch(e) {
-    showToast('שגיאת רשת — נסה שוב', true);
+    console.error(e);
+    showToast('שגיאה בייצור PDF', true);
   } finally {
-    btn.disabled = false; btn.textContent = '✈ שלח דוח PDF';
+    btn.disabled = false; btn.textContent = '⬇ הורד דוח PDF';
   }
 }
 
-// טען אירועים קיימים בטעינת הדף
 loadEvents();
 </script>
 </body>

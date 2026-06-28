@@ -15,7 +15,6 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#f5f6f8;direction:rtl;co
 .brand-sub{font-size:11px;color:#888}
 .top-actions{display:flex;gap:8px;align-items:center}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid #d1d5db;background:#fff;color:#374151;transition:all .15s;font-family:inherit;text-decoration:none}
-.btn:hover{background:#f9fafb}
 .btn-primary{background:#f5c518;border-color:#e8b800;color:#1a1200;font-weight:600}
 .btn-primary:hover{background:#e8b800}
 .btn-primary:disabled{opacity:.5;cursor:not-allowed}
@@ -75,6 +74,9 @@ tr:hover td{background:#fffbeb}
 .toast.err{background:#dc2626}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 @media(max-width:768px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+
+/* Print / PDF styles */
+#printFrame{display:none}
 </style>
 </head>
 <body>
@@ -93,35 +95,16 @@ tr:hover td{background:#fffbeb}
   </div>
   <div class="top-actions">
     <span id="lastScan" style="font-size:11px;color:#9ca3af"></span>
-    <button class="btn btn-primary" id="scanBtn" onclick="startScan()">
-      ↻ סריקת אירועים
-    </button>
+    <button class="btn btn-primary" id="scanBtn" onclick="startScan()">↻ סריקת אירועים</button>
   </div>
 </div>
 
 <div class="content">
-
   <div class="kpi-row">
-    <div class="kpi warn">
-      <div class="kpi-label">אירועים פעילים</div>
-      <div class="kpi-value" id="kpiTotal">—</div>
-      <div class="kpi-sub">30 יום הקרובים</div>
-    </div>
-    <div class="kpi danger">
-      <div class="kpi-label">סיכון גבוה</div>
-      <div class="kpi-value" id="kpiHigh">—</div>
-      <div class="kpi-sub">עומס very_high / high</div>
-    </div>
-    <div class="kpi">
-      <div class="kpi-label">תחנות מושפעות</div>
-      <div class="kpi-value" id="kpiStations">—</div>
-      <div class="kpi-sub">תחנות ייחודיות</div>
-    </div>
-    <div class="kpi ok">
-      <div class="kpi-label">אירועים חדשים</div>
-      <div class="kpi-value" id="kpiNew">—</div>
-      <div class="kpi-sub">מסריקה אחרונה</div>
-    </div>
+    <div class="kpi warn"><div class="kpi-label">אירועים פעילים</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">30 יום הקרובים</div></div>
+    <div class="kpi danger"><div class="kpi-label">סיכון גבוה</div><div class="kpi-value" id="kpiHigh">—</div><div class="kpi-sub">עומס very_high / high</div></div>
+    <div class="kpi"><div class="kpi-label">תחנות מושפעות</div><div class="kpi-value" id="kpiStations">—</div><div class="kpi-sub">תחנות ייחודיות</div></div>
+    <div class="kpi ok"><div class="kpi-label">אירועים חדשים</div><div class="kpi-value" id="kpiNew">—</div><div class="kpi-sub">מסריקה אחרונה</div></div>
   </div>
 
   <div id="undoBar" class="undo-bar">
@@ -129,7 +112,6 @@ tr:hover td{background:#fffbeb}
     <button class="undo-btn" onclick="undoDelete()">↩ בטל מחיקה</button>
   </div>
 
-  <!-- טבלת אירועים -->
   <div class="card" style="position:relative">
     <div id="scanOverlay" class="scan-overlay">
       <div class="spinner"></div>
@@ -152,380 +134,194 @@ tr:hover td{background:#fffbeb}
     </div>
     <div class="table-wrap">
       <table>
-        <thead>
-          <tr>
-            <th style="width:28%">אירוע</th>
-            <th style="width:9%">תאריך</th>
-            <th style="width:10%">מתחם</th>
-            <th style="width:16%">תחנות מושפעות</th>
-            <th style="width:12%">צפי קהל</th>
-            <th style="width:8%">דחרוג</th>
-            <th style="width:9%">סוג</th>
-            <th style="width:8%">גזרה</th>
-            <th style="width:4%"></th>
-          </tr>
-        </thead>
+        <thead><tr>
+          <th style="width:28%">אירוע</th><th style="width:9%">תאריך</th><th style="width:10%">מתחם</th>
+          <th style="width:16%">תחנות מושפעות</th><th style="width:12%">צפי קהל</th>
+          <th style="width:8%">דחרוג</th><th style="width:9%">סוג</th><th style="width:8%">גזרה</th><th style="width:4%"></th>
+        </tr></thead>
         <tbody id="evBody">
-          <tr><td colspan="9" class="empty">
-            <div class="empty-icon">📡</div>
-            לחץ "סריקת אירועים" להתחיל
-          </td></tr>
+          <tr><td colspan="9" class="empty"><div class="empty-icon">📡</div>לחץ "סריקת אירועים" להתחיל</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 
-  <!-- גרף -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-title">📊 עומס צפוי לפי שבוע</div>
-    </div>
-    <div class="chart-wrap">
-      <canvas id="wchart" role="img" aria-label="גרף עומס לפי שבועות">עומס לפי שבוע.</canvas>
-    </div>
+    <div class="card-head"><div class="card-title">📊 עומס צפוי לפי שבוע</div></div>
+    <div class="chart-wrap"><canvas id="wchart"></canvas></div>
   </div>
 
-  <!-- הורדת PDF -->
   <div class="card">
-    <div class="card-head">
-      <div class="card-title">📄 דוח PDF</div>
-    </div>
+    <div class="card-head"><div class="card-title">📄 דוח PDF</div></div>
     <div class="pdf-panel">
-      <div class="pdf-info">
-        הדוח יכלול רשימת כל האירועים, תחנות מושפעות, צפי קהל ורמות דחרוג — בפורמט PDF רשמי מעוצב.
-      </div>
-      <button class="btn btn-green" id="pdfBtn" onclick="downloadPDF()">
-        ⬇ הורד דוח PDF
-      </button>
+      <div class="pdf-info">הדוח יכלול רשימת כל האירועים עם תחנות מושפעות, צפי קהל ורמות דחרוג — בפורמט PDF מעוצב עם לוגו מסילת ישראל.</div>
+      <button class="btn btn-green" id="pdfBtn" onclick="downloadPDF()">⬇ הורד דוח PDF</button>
     </div>
   </div>
-
 </div>
 
 <div class="toast" id="globalToast"></div>
+<iframe id="printFrame" style="display:none"></iframe>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script>
-let allEvents = [], deletedEvent = null, chart = null, activeFilter = 'all';
+let allEvents=[], deletedEvent=null, chart=null, activeFilter='all';
+const TYPE_BADGE={'כדורגל':'b-blue','הופעה':'b-purple','קונצרט':'b-purple','פסטיבל':'b-amber','ספורט':'b-green','כנס':'b-gray','ימי סטודנטים':'b-green','הפלגה':'b-blue','אירוע עירייה':'b-gray','תרבות':'b-gray','אחר':'b-gray'};
+const REGION_COLOR={'תל אביב - גוש דן':'#0ea5e9','שרון':'#10b981','חיפה וצפון':'#8b5cf6'};
+const SCAN_STEPS=['מאתחל סורקים (21 מקורות)...','סורק IFA — ליגת העל...','סורק בלומפילד...','סורק סמי עופר...','סורק אקספו תל אביב...','סורק גני יהושע...','סורק עיריות...','סורק Eventim IL...','סורק Ticketmaster IL...','מחשב צפי דחרוג...','מאמת תאריכים...','שומר לבסיס נתונים...','בונה דוח...'];
 
-const TYPE_BADGE = {
-  'כדורגל':'b-blue','הופעה':'b-purple','קונצרט':'b-purple',
-  'פסטיבל':'b-amber','ספורט':'b-green','כנס':'b-gray',
-  'ימי סטודנטים':'b-green','הפלגה':'b-blue','אירוע עירייה':'b-gray',
-  'תרבות':'b-gray','אחר':'b-gray'
-};
-const REGION_COLOR = {
-  'תל אביב - גוש דן':'#0ea5e9',
-  'שרון':'#10b981',
-  'חיפה וצפון':'#8b5cf6'
-};
-const SCAN_STEPS = [
-  'מאתחל סורקים (21 מקורות)...','סורק IFA — ליגת העל...',
-  'סורק בלומפילד...','סורק סמי עופר...','סורק אקספו תל אביב...',
-  'סורק גני יהושע...','סורק עיריות...','סורק Eventim IL...',
-  'סורק Ticketmaster IL...','מחשב צפי דחרוג...','מאמת תאריכים...',
-  'שומר לבסיס נתונים...','בונה דוח...'
-];
+function riskBadge(l){if(l==='very_high')return'<span class="badge b-red">🔴 גבוה מאוד</span>';if(l==='high')return'<span class="badge b-red">🔴 גבוה</span>';if(l==='medium')return'<span class="badge b-amber">🟡 בינוני</span>';return'<span class="badge b-green">🟢 נמוך</span>';}
+function riskText(l){if(l==='very_high')return'גבוה מאוד';if(l==='high')return'גבוה';if(l==='medium')return'בינוני';return'נמוך';}
+function riskColor(l){if(l==='very_high'||l==='high')return'#dc2626';if(l==='medium')return'#d97706';return'#059669';}
 
-function riskBadge(level) {
-  if(level==='very_high') return '<span class="badge b-red">🔴 גבוה מאוד</span>';
-  if(level==='high')      return '<span class="badge b-red">🔴 גבוה</span>';
-  if(level==='medium')    return '<span class="badge b-amber">🟡 בינוני</span>';
-  return '<span class="badge b-green">🟢 נמוך</span>';
-}
+function crowdBar(crowd){const pct=Math.min(Math.round((crowd/80000)*100),100);const col=pct>60?'#dc2626':pct>30?'#d97706':'#059669';return`<div class="crowd-bar"><div class="crowd-track"><div class="crowd-fill" style="width:${pct}%;background:${col}"></div></div><span style="font-size:11px">${crowd.toLocaleString('he-IL')}</span></div>`;}
 
-function crowdBar(crowd) {
-  const pct = Math.min(Math.round((crowd/80000)*100), 100);
-  const col = pct>60?'#dc2626':pct>30?'#d97706':'#059669';
-  return `<div class="crowd-bar">
-    <div class="crowd-track"><div class="crowd-fill" style="width:${pct}%;background:${col}"></div></div>
-    <span style="font-size:11px">${crowd.toLocaleString('he-IL')}</span>
-  </div>`;
-}
+function stationPills(p,s){const all=[...(p||[]).map(x=>`<span class="s-pill">${x}</span>`),...(s||[]).slice(0,1).map(x=>`<span class="s-pill sec">${x}</span>`)];return`<div class="s-pills">${all.join('')}</div>`;}
 
-function stationPills(primary, secondary) {
-  const all = [
-    ...(primary||[]).map(s=>`<span class="s-pill">${s}</span>`),
-    ...(secondary||[]).slice(0,1).map(s=>`<span class="s-pill sec">${s}</span>`)
-  ];
-  return `<div class="s-pills">${all.join('')}</div>`;
-}
-
-function renderTable(evs) {
-  const tbody = document.getElementById('evBody');
-  if(!evs.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="empty"><div class="empty-icon">📭</div>אין אירועים להצגה</td></tr>';
-    return;
-  }
-  tbody.innerHTML = [...evs].sort((a,b)=>a.date.localeCompare(b.date)).map(ev => {
-    const d = new Date(ev.date);
-    const ds = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
-    const badge = TYPE_BADGE[ev.event_type] || 'b-gray';
-    const rc = REGION_COLOR[ev.region] || '#64748b';
-    const regionShort = (ev.region||'').replace('תל אביב - גוש דן','ת"א').replace('חיפה וצפון','חיפה');
-    return `<tr>
-      <td style="font-weight:500;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0">${ev.title}</td>
-      <td style="white-space:nowrap;font-size:11px">${ds} ${ev.time||''}</td>
-      <td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0">${ev.location||''}</td>
-      <td>${stationPills(ev.stations_primary, ev.stations_secondary)}</td>
-      <td>${crowdBar(ev.estimated_crowd||0)}</td>
-      <td>${riskBadge(ev.crowd_level)}</td>
-      <td><span class="badge ${badge}">${ev.event_type||''}</span></td>
-      <td><span style="font-size:11px;color:${rc};font-weight:500">${regionShort}</span></td>
-      <td><button class="delbtn" onclick="delEvent('${ev.id}')">🗑</button></td>
-    </tr>`;
+function renderTable(evs){
+  const tbody=document.getElementById('evBody');
+  if(!evs.length){tbody.innerHTML='<tr><td colspan="9" class="empty"><div class="empty-icon">📭</div>אין אירועים להצגה</td></tr>';return;}
+  tbody.innerHTML=[...evs].sort((a,b)=>a.date.localeCompare(b.date)).map(ev=>{
+    const d=new Date(ev.date);const ds=`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;
+    const badge=TYPE_BADGE[ev.event_type]||'b-gray';const rc=REGION_COLOR[ev.region]||'#64748b';
+    const regionShort=(ev.region||'').replace('תל אביב - גוש דן','ת"א').replace('חיפה וצפון','חיפה');
+    return`<tr><td style="font-weight:500;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0">${ev.title}</td><td style="white-space:nowrap;font-size:11px">${ds} ${ev.time||''}</td><td style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:0">${ev.location||''}</td><td>${stationPills(ev.stations_primary,ev.stations_secondary)}</td><td>${crowdBar(ev.estimated_crowd||0)}</td><td>${riskBadge(ev.crowd_level)}</td><td><span class="badge ${badge}">${ev.event_type||''}</span></td><td><span style="font-size:11px;color:${rc};font-weight:500">${regionShort}</span></td><td><button class="delbtn" onclick="delEvent('${ev.id}')">🗑</button></td></tr>`;
   }).join('');
 }
 
-function setFilter(f, btn) {
-  activeFilter = f;
-  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilter();
-}
+function setFilter(f,btn){activeFilter=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');applyFilter();}
+function applyFilter(){let evs=allEvents;if(activeFilter==='high')evs=allEvents.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high');else if(['תל אביב - גוש דן','חיפה וצפון','שרון'].includes(activeFilter))evs=allEvents.filter(e=>e.region===activeFilter);else if(activeFilter!=='all')evs=allEvents.filter(e=>e.event_type===activeFilter);renderTable(evs);}
 
-function applyFilter() {
-  let evs = allEvents;
-  if(activeFilter==='high') evs = allEvents.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high');
-  else if(activeFilter==='תל אביב - גוש דן'||activeFilter==='חיפה וצפון'||activeFilter==='שרון')
-    evs = allEvents.filter(e=>e.region===activeFilter);
-  else if(activeFilter!=='all') evs = allEvents.filter(e=>e.event_type===activeFilter);
-  renderTable(evs);
-}
+function delEvent(id){deletedEvent=allEvents.find(e=>e.id===id);allEvents=allEvents.filter(e=>e.id!==id);fetch(`/api/events/${id}`,{method:'DELETE'}).catch(console.error);applyFilter();updateKPIs();updateChart();document.getElementById('undoText').textContent=`"${(deletedEvent?.title||'').substring(0,30)}..." הוסר`;document.getElementById('undoBar').style.display='flex';setTimeout(()=>{document.getElementById('undoBar').style.display='none';deletedEvent=null;},6000);}
+function undoDelete(){if(!deletedEvent)return;allEvents.push(deletedEvent);deletedEvent=null;document.getElementById('undoBar').style.display='none';applyFilter();updateKPIs();updateChart();}
 
-function delEvent(id) {
-  deletedEvent = allEvents.find(e=>e.id===id);
-  allEvents = allEvents.filter(e=>e.id!==id);
-  fetch(`/api/events/${id}`, {method:'DELETE'}).catch(console.error);
-  applyFilter(); updateKPIs(); updateChart();
-  document.getElementById('undoText').textContent = `"${(deletedEvent?.title||'').substring(0,30)}..." הוסר`;
-  document.getElementById('undoBar').style.display = 'flex';
-  setTimeout(()=>{document.getElementById('undoBar').style.display='none';deletedEvent=null;}, 6000);
-}
+function updateKPIs(){document.getElementById('kpiTotal').textContent=allEvents.length;document.getElementById('kpiHigh').textContent=allEvents.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high').length;const st=new Set(allEvents.flatMap(e=>[...(e.stations_primary||[]),...(e.stations_secondary||[])]));document.getElementById('kpiStations').textContent=st.size;document.getElementById('kpiNew').textContent='—';}
 
-function undoDelete() {
-  if(!deletedEvent) return;
-  allEvents.push(deletedEvent); deletedEvent=null;
-  document.getElementById('undoBar').style.display='none';
-  applyFilter(); updateKPIs(); updateChart();
-}
+function updateChart(){if(!window.Chart)return;const now=new Date();const labels=[],data=[];for(let i=0;i<5;i++){const s=new Date(now);s.setDate(s.getDate()+i*7);const e=new Date(s);e.setDate(e.getDate()+7);labels.push(`שבוע ${i+1}`);data.push(allEvents.filter(ev=>{const d=new Date(ev.date);return d>=s&&d<e;}).reduce((sum,ev)=>sum+(ev.estimated_crowd||0),0));}if(chart)chart.destroy();chart=new Chart(document.getElementById('wchart').getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'צפי קהל',data,backgroundColor:data.map(v=>v>30000?'rgba(220,38,38,.12)':v>15000?'rgba(217,119,6,.12)':'rgba(5,150,105,.12)'),borderColor:data.map(v=>v>30000?'#dc2626':v>15000?'#d97706':'#059669'),borderWidth:2,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString('he-IL')} מבקרים`}}},scales:{x:{ticks:{color:'#9ca3af',font:{size:11}},grid:{color:'#f3f4f6'}},y:{ticks:{color:'#9ca3af',font:{size:11},callback:v=>v>=1000?(v/1000)+'K':v},grid:{color:'#f3f4f6'}}}}});}
 
-function updateKPIs() {
-  document.getElementById('kpiTotal').textContent = allEvents.length;
-  document.getElementById('kpiHigh').textContent = allEvents.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high').length;
-  const st = new Set(allEvents.flatMap(e=>[...(e.stations_primary||[]),...(e.stations_secondary||[])]));
-  document.getElementById('kpiStations').textContent = st.size;
-  document.getElementById('kpiNew').textContent = '—';
-}
+async function loadEvents(){try{const r=await fetch('/api/events');const d=await r.json();if(d.ok){allEvents=d.events;applyFilter();updateKPIs();setTimeout(updateChart,100);}}catch(e){console.error(e);}}
 
-function updateChart() {
-  if(!window.Chart) return;
-  const now = new Date();
-  const labels = [], data = [];
-  for(let i=0;i<5;i++) {
-    const s = new Date(now); s.setDate(s.getDate()+i*7);
-    const e = new Date(s); e.setDate(e.getDate()+7);
-    labels.push(`שבוע ${i+1}`);
-    data.push(allEvents.filter(ev=>{const d=new Date(ev.date);return d>=s&&d<e;}).reduce((sum,ev)=>sum+(ev.estimated_crowd||0),0));
-  }
-  if(chart) chart.destroy();
-  chart = new Chart(document.getElementById('wchart').getContext('2d'),{
-    type:'bar',
-    data:{labels,datasets:[{label:'צפי קהל',data,
-      backgroundColor:data.map(v=>v>30000?'rgba(220,38,38,.12)':v>15000?'rgba(217,119,6,.12)':'rgba(5,150,105,.12)'),
-      borderColor:data.map(v=>v>30000?'#dc2626':v>15000?'#d97706':'#059669'),
-      borderWidth:2,borderRadius:6}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.toLocaleString('he-IL')} מבקרים`}}},
-      scales:{
-        x:{ticks:{color:'#9ca3af',font:{size:11}},grid:{color:'#f3f4f6'}},
-        y:{ticks:{color:'#9ca3af',font:{size:11},callback:v=>v>=1000?(v/1000)+'K':v},grid:{color:'#f3f4f6'}}
-      }}
-  });
-}
+let scanInterval=null;
+async function startScan(){const btn=document.getElementById('scanBtn');const ov=document.getElementById('scanOverlay');btn.disabled=true;ov.style.display='flex';const lbl=document.getElementById('scanLabel');const pf=document.getElementById('pFill');let step=0;const stepInterval=setInterval(()=>{if(step<SCAN_STEPS.length){lbl.textContent=SCAN_STEPS[step];pf.style.width=Math.round(((step+1)/SCAN_STEPS.length)*100)+'%';step++;}},800);try{await fetch('/api/scan',{method:'POST'});scanInterval=setInterval(async()=>{const st=await(await fetch('/api/scan/status')).json();if(!st.running){clearInterval(scanInterval);clearInterval(stepInterval);pf.style.width='100%';lbl.textContent='סריקה הושלמה!';setTimeout(()=>{ov.style.display='none';btn.disabled=false;loadEvents();if(st.last_scan)document.getElementById('lastScan').textContent=`עדכון אחרון: ${st.last_scan}`;if(st.last_new>0)document.getElementById('kpiNew').textContent=st.last_new;},800);}},1500);}catch(e){clearInterval(stepInterval);ov.style.display='none';btn.disabled=false;showToast('שגיאה בסריקה — בדוק חיבור',true);}}
 
-async function loadEvents() {
-  try {
-    const r = await fetch('/api/events');
-    const d = await r.json();
-    if(d.ok) {
-      allEvents = d.events;
-      applyFilter(); updateKPIs(); setTimeout(updateChart,100);
-    }
-  } catch(e) { console.error(e); }
-}
-
-let scanInterval = null;
-async function startScan() {
-  const btn = document.getElementById('scanBtn');
-  const ov = document.getElementById('scanOverlay');
-  btn.disabled = true;
-  ov.style.display = 'flex';
-  const lbl = document.getElementById('scanLabel');
-  const pf = document.getElementById('pFill');
-  let step = 0;
-  const stepInterval = setInterval(()=>{
-    if(step < SCAN_STEPS.length) {
-      lbl.textContent = SCAN_STEPS[step];
-      pf.style.width = Math.round(((step+1)/SCAN_STEPS.length)*100)+'%';
-      step++;
-    }
-  }, 800);
-
-  try {
-    await fetch('/api/scan', {method:'POST'});
-    scanInterval = setInterval(async()=>{
-      const st = await (await fetch('/api/scan/status')).json();
-      if(!st.running) {
-        clearInterval(scanInterval);
-        clearInterval(stepInterval);
-        pf.style.width = '100%';
-        lbl.textContent = 'סריקה הושלמה!';
-        setTimeout(()=>{
-          ov.style.display = 'none';
-          btn.disabled = false;
-          loadEvents();
-          if(st.last_scan) document.getElementById('lastScan').textContent = `עדכון אחרון: ${st.last_scan}`;
-          if(st.last_new > 0) document.getElementById('kpiNew').textContent = st.last_new;
-        }, 800);
-      }
-    }, 1500);
-  } catch(e) {
-    clearInterval(stepInterval);
-    ov.style.display = 'none';
-    btn.disabled = false;
-    showToast('שגיאה בסריקה — בדוק חיבור', true);
-  }
-}
-
-function showToast(msg, err) {
-  const t = document.getElementById('globalToast');
-  t.textContent = msg;
-  t.className = 'toast' + (err?' err':'');
-  t.style.display = 'block';
-  setTimeout(()=>t.style.display='none', 3500);
-}
-
-function riskText(level) {
-  if(level==='very_high') return 'גבוה מאוד';
-  if(level==='high') return 'גבוה';
-  if(level==='medium') return 'בינוני';
-  return 'נמוך';
-}
+function showToast(msg,err){const t=document.getElementById('globalToast');t.textContent=msg;t.className='toast'+(err?' err':'');t.style.display='block';setTimeout(()=>t.style.display='none',3500);}
 
 function downloadPDF() {
-  if(!allEvents.length) { showToast('אין אירועים — הרץ סריקה תחילה', true); return; }
-  const btn = document.getElementById('pdfBtn');
-  btn.disabled = true; btn.textContent = '⏳ מייצר PDF...';
+  if(!allEvents.length){showToast('אין אירועים — הרץ סריקה תחילה',true);return;}
+  const btn=document.getElementById('pdfBtn');
+  btn.disabled=true;btn.textContent='⏳ מכין דוח...';
 
-  try {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const evs=[...allEvents].sort((a,b)=>a.date.localeCompare(b.date));
+  const now=new Date().toLocaleDateString('he-IL',{year:'numeric',month:'long',day:'numeric'});
+  const highCount=evs.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high').length;
+  const stations=new Set(evs.flatMap(e=>[...(e.stations_primary||[]),...(e.stations_secondary||[])]));
+  const logoUrl='https://raw.githubusercontent.com/Hilux10/rail-event-dashboard/main/logo.png';
 
-    // כותרת ראשית
-    doc.setFillColor(245, 197, 24);
-    doc.rect(0, 0, 297, 22, 'F');
-    doc.setTextColor(26, 18, 0);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Israel Railways Security Division', 148, 10, { align: 'center' });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Event Scan Report - ' + new Date().toLocaleDateString('he-IL'), 148, 17, { align: 'center' });
+  const rows=evs.map((ev,i)=>{
+    const d=new Date(ev.date);
+    const ds=`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+    const stns=[...(ev.stations_primary||[]),...(ev.stations_secondary||[])].slice(0,3).join('، ');
+    const rc=riskColor(ev.crowd_level);
+    const region=(ev.region||'').replace('תל אביב - גוש דן','ת"א').replace('חיפה וצפון','חיפה');
+    const bg=i%2===0?'#ffffff':'#f9fafb';
+    return `<tr style="background:${bg}">
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;font-weight:600;color:#111;max-width:200px;word-break:break-word">${ev.title||''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;white-space:nowrap;color:#374151">${ds}${ev.time?' '+ev.time:''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;color:#374151;max-width:120px;word-break:break-word">${ev.location||''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;color:#374151">${stns}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;text-align:center;color:#374151">${(ev.estimated_crowd||0).toLocaleString('he-IL')}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;text-align:center;font-weight:700;color:${rc}">${riskText(ev.crowd_level)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;text-align:center;color:#374151">${ev.event_type||''}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;font-size:10px;text-align:center;color:#374151">${region}</td>
+    </tr>`;
+  }).join('');
 
-    // KPI boxes
-    const evs = [...allEvents].sort((a,b)=>a.date.localeCompare(b.date));
-    const highCount = evs.filter(e=>e.crowd_level==='high'||e.crowd_level==='very_high').length;
-    const stations = new Set(evs.flatMap(e=>[...(e.stations_primary||[]),...(e.stations_secondary||[])]));
-
-    const kpis = [
-      { label: 'Active Events', value: evs.length },
-      { label: 'High Risk', value: highCount },
-      { label: 'Stations Affected', value: stations.size },
-    ];
-    kpis.forEach((k, i) => {
-      const x = 10 + i * 55;
-      doc.setFillColor(249, 250, 251);
-      doc.roundedRect(x, 26, 50, 16, 2, 2, 'F');
-      doc.setDrawColor(229, 231, 235);
-      doc.roundedRect(x, 26, 50, 16, 2, 2, 'S');
-      doc.setTextColor(107, 114, 128);
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.text(k.label, x + 25, 31, { align: 'center' });
-      doc.setTextColor(17, 17, 17);
-      doc.setFontSize(16);
-      doc.setFont('helvetica', 'bold');
-      doc.text(String(k.value), x + 25, 39, { align: 'center' });
-    });
-
-    // טבלת אירועים
-    const rows = evs.map(ev => {
-      const d = new Date(ev.date);
-      const ds = `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
-      const stations = [...(ev.stations_primary||[]), ...(ev.stations_secondary||[])].slice(0,2).join(', ');
-      const region = (ev.region||'').replace('תל אביב - גוש דן','Tel Aviv').replace('חיפה וצפון','Haifa').replace('שרון','Sharon');
-      return [
-        ev.title ? ev.title.substring(0, 35) : '',
-        ds + (ev.time ? ' ' + ev.time : ''),
-        ev.location ? ev.location.substring(0, 20) : '',
-        stations,
-        ev.estimated_crowd ? ev.estimated_crowd.toLocaleString() : '0',
-        riskText(ev.crowd_level),
-        ev.event_type || '',
-        region,
-      ];
-    });
-
-    doc.autoTable({
-      head: [['Event', 'Date', 'Venue', 'Stations', 'Crowd Est.', 'Risk', 'Type', 'Region']],
-      body: rows,
-      startY: 46,
-      styles: { fontSize: 8, cellPadding: 2, overflow: 'ellipsize' },
-      headStyles: { fillColor: [26, 18, 0], textColor: [245, 197, 24], fontStyle: 'bold', fontSize: 8 },
-      alternateRowStyles: { fillColor: [249, 250, 251] },
-      columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 28 },
-        2: { cellWidth: 35 },
-        3: { cellWidth: 45 },
-        4: { cellWidth: 22 },
-        5: { cellWidth: 22 },
-        6: { cellWidth: 22 },
-        7: { cellWidth: 25 },
-      },
-      didParseCell: (data) => {
-        if(data.section === 'body' && data.column.index === 5) {
-          const v = data.cell.raw;
-          if(v === 'גבוה מאוד') data.cell.styles.textColor = [153, 27, 27];
-          else if(v === 'גבוה') data.cell.styles.textColor = [185, 28, 28];
-          else if(v === 'בינוני') data.cell.styles.textColor = [146, 64, 14];
-          else data.cell.styles.textColor = [20, 83, 45];
-        }
-      },
-      margin: { left: 10, right: 10 },
-    });
-
-    // פוטר
-    const pageCount = doc.internal.getNumberOfPages();
-    for(let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(7);
-      doc.setTextColor(156, 163, 175);
-      doc.text(`Page ${i} of ${pageCount} | Israel Railways Security Division | Confidential`, 148, 205, { align: 'center' });
-    }
-
-    const date = new Date().toISOString().split('T')[0];
-    doc.save(`rail-security-events-${date}.pdf`);
-    showToast('✅ דוח PDF הורד בהצלחה!');
-  } catch(e) {
-    console.error(e);
-    showToast('שגיאה בייצור PDF', true);
-  } finally {
-    btn.disabled = false; btn.textContent = '⬇ הורד דוח PDF';
+  const html=`<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="UTF-8">
+<title>דוח אירועים — אגף הביטחון</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; direction: rtl; color: #111; background: #fff; }
+  @page { size: A4 landscape; margin: 10mm 12mm; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
+  .header { background: #f5c518; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-radius: 8px 8px 0 0; margin-bottom: 0; }
+  .header-logo { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; background: #fff; display: flex; align-items: center; justify-content: center; }
+  .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .header-title h1 { font-size: 18px; font-weight: 800; color: #1a1200; }
+  .header-title p { font-size: 11px; color: #7a5c00; margin-top: 2px; }
+  .header-date { font-size: 11px; color: #7a5c00; text-align: left; }
+  .kpi-row { display: flex; gap: 10px; padding: 12px; background: #1a1200; }
+  .kpi { flex: 1; background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px; text-align: center; }
+  .kpi-label { font-size: 9px; color: #f5c518; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .kpi-value { font-size: 22px; font-weight: 800; color: #fff; }
+  .kpi-sub { font-size: 8px; color: #9ca3af; margin-top: 2px; }
+  .section-title { font-size: 11px; font-weight: 700; color: #374151; padding: 10px 12px 6px; background: #f9fafb; border-bottom: 2px solid #f5c518; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: #1a1200; }
+  thead th { padding: 8px 10px; font-size: 9px; color: #f5c518; font-weight: 700; text-align: right; letter-spacing: 0.3px; }
+  .footer { background: #f9fafb; border-top: 2px solid #f5c518; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 0; }
+  .footer-text { font-size: 8px; color: #9ca3af; }
+  .confidential { font-size: 8px; color: #dc2626; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="header-logo"><img src="${logoUrl}" onerror="this.parentElement.innerHTML='🚂'"></div>
+    <div class="header-title">
+      <h1>דוח אירועים — אגף הביטחון</h1>
+      <p>מסילת ישראל | מערכת סריקת אירועים אוטומטית</p>
+    </div>
+  </div>
+  <div class="header-date">
+    <div style="font-size:13px;font-weight:700;color:#1a1200">${now}</div>
+    <div style="font-size:9px;color:#7a5c00;margin-top:2px">סווג: מוגבל לשימוש פנימי</div>
+  </div>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="kpi-label">סה"כ אירועים</div><div class="kpi-value">${evs.length}</div><div class="kpi-sub">30 יום הקרובים</div></div>
+  <div class="kpi"><div class="kpi-label">סיכון גבוה</div><div class="kpi-value" style="color:#f87171">${highCount}</div><div class="kpi-sub">high / very_high</div></div>
+  <div class="kpi"><div class="kpi-label">תחנות מושפעות</div><div class="kpi-value">${stations.size}</div><div class="kpi-sub">תחנות ייחודיות</div></div>
+  <div class="kpi"><div class="kpi-label">תאריך סריקה</div><div class="kpi-value" style="font-size:14px">${now}</div><div class="kpi-sub">עדכון אחרון</div></div>
+</div>
+
+<div class="section-title">📅 רשימת אירועים קרובים</div>
+<table>
+  <thead><tr>
+    <th style="width:22%">אירוע</th>
+    <th style="width:12%">תאריך ושעה</th>
+    <th style="width:13%">מתחם</th>
+    <th style="width:18%">תחנות מושפעות</th>
+    <th style="width:10%;text-align:center">צפי קהל</th>
+    <th style="width:9%;text-align:center">דחרוג</th>
+    <th style="width:9%;text-align:center">סוג</th>
+    <th style="width:7%;text-align:center">גזרה</th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
+</table>
+
+<div class="footer">
+  <div class="footer-text">הופק אוטומטית על ידי מערכת סריקת האירועים | אגף הביטחון — מסילת ישראל</div>
+  <div class="confidential">🔒 סודי — לשימוש פנימי בלבד</div>
+</div>
+</body>
+</html>`;
+
+  const frame=document.getElementById('printFrame');
+  frame.style.display='block';
+  const doc=frame.contentDocument||frame.contentWindow.document;
+  doc.open();doc.write(html);doc.close();
+  setTimeout(()=>{
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(()=>{frame.style.display='none';},1000);
+    btn.disabled=false;btn.textContent='⬇ הורד דוח PDF';
+  },800);
 }
 
 loadEvents();
